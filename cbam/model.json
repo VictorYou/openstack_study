@@ -1,0 +1,80 @@
+{
+  "cbam": {
+    "ha_type": "SingleNode",
+    "virtual_addresses_enabled": false,
+    "node_types": {
+      "standalone": {
+        "networks": [
+          "OM"
+        ],
+        "flavor": "ea.016-0044",
+        "volume_size": 300
+      }
+    },
+    "cbam_version": "18",
+    "nameservice": [
+      "10.8.195.6",
+      "10.8.195.7"
+    ],
+    "nodes": {
+      "single": {
+        "availability_zone": "es-si-os-dhn-55_1",
+        "ports": {
+          "OM": {
+            "external_floating_ip_address": "10.131.69.209",
+            "external_floating_ip_id": "ff5686d6-ab44-4af5-a3c7-702efb6130a7"
+          }
+        },
+        "type": "standalone"
+      }
+    },
+    "instance_id": "cbam18",
+    "networks": [
+      {
+        "id": "OM",
+        "port_creation_type": "new",
+        "ip_type": "ipv4",
+        "_meta": {
+          "connectedToAll": true,
+          "persistent": true
+        },
+        "commissioning_ip_version": "ipv4",
+        "security_group": "default",
+        "ipv4_assignment_type": "automatic_ip",
+        "ipv4_prefix": 24,
+        "floating_ip_type": "existing",
+        "ipv4_zones": [
+          "BACKUP",
+          "CATALOG",
+          "CBAMAPI",
+          "CLUSTER",
+          "DBBACKEND",
+          "DBFRONTEND",
+          "DEFAULT",
+          "EMS",
+          "GUI",
+          "KC_ADMIN",
+          "MGMT",
+          "NE3SWS",
+          "OMAGENT",
+          "SSHD",
+          "SUBSCRIPTION",
+          "TLM",
+          "VNF"
+        ],
+        "has_ipv6_virtual_ip": false,
+        "ipv4_gateway": "192.168.0.1",
+        "has_ipv4_virtual_ip": false,
+        "network_resource_id": "cbam"
+      }
+    ],
+    "image": "cbam18",
+    "model_version": "V1",
+    "cloud_type": "OpenStack",
+    "ssh_key": "cbam",
+    "timeservice": [
+      "10.41.49.1"
+    ],
+    "timezone": "Asia/Chongqing"
+  }
+}
