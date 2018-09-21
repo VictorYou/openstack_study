@@ -1,0 +1,44 @@
+heat_template_version: 2015-04-30
+
+parameters:
+  cbam:
+    type: json
+
+resources:
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - direction: ingress
+          ethertype: IPv4
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+          remote_ip_prefix: 0.0.0.0/0
+
+  port:
+    type: OS::Neutron::Port
+    depends_on: security_group
+    properties:
+      network: { get_param: [ cbam, virtualLinks, internal_vl, networkId ] }
+      security_groups:
+        - { get_resource: security_group }
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: [ cbam, externalConnectionPoints, universal_ecp, networkId ] }
+      port_id: { get_resource: port }
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      key_name: eecloud55
+      image: { get_param: [ cbam, resources, server, imageId ] }
+      flavor: { get_param: [ cbam, resources, server, flavorId ] }
+      networks:
+        - port: { get_resource: port }
+
+outputs:
+  public_ip:
+    value: { get_attr: [floating_ip, floating_ip_address] }

@@ -1,0 +1,20 @@
+{
+  "resources": {
+    "server": {
+      "flavorId": "aa.001-0002",
+      "imageId": "centos7"
+    }
+  },
+  "externalConnectionPoints": {
+    "universal_ecp": {
+      "networkId": "datacentre",
+      "addresses": [
+      ]
+    }
+  },
+  "virtualLinks": {
+    "internal_vl": {
+      "networkId": "cbam"
+    }
+  }
+}
