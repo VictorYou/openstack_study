@@ -1,0 +1,140 @@
+description: Mock application for DevOps Server self-testing
+heat_template_version: '2015-04-30'
+outputs:
+  floating-ip:
+    description: floating IP address
+    value:
+      get_attr: [floating_ip, floating_ip_address]
+  internal-ip:
+    description: oam internal IP address
+    value:
+      get_attr: [internal_port, fixed_ips, 0, ip_address]
+parameters:
+  cbam: {type: json}
+resources:
+  cloud_conf:
+    properties:
+      cloud_config:
+        network: {config: disabled}
+        preserve_hostname: true
+        runcmd:
+        - str_replace:
+            params:
+              app_version%:
+                get_param: [cbam, extensions, app_version]
+              artifactory_ip%:
+                get_param: [cbam, extensions, artifactory_ip]
+              artifactory_port%:
+                get_param: [cbam, extensions, artifactory_port]
+              repository_name%:
+                get_param: [cbam, extensions, repository_name]
+            template: 'sh -x /usr/bin/get_application.sh artifactory_ip%:artifactory_port%
+              app_version% repository_name% 2>&1 > /home/centos/log
+
+              '
+        ssh_pwauth: true
+        write_files:
+        - {path: /home/centos/test_cbam}
+        - {permissions: '0644'}
+        - {content: test}
+    type: OS::Heat::CloudConfig
+  cloud_init:
+    properties:
+      config:
+        str_replace:
+          params:
+            $cbam.publicSshKey:
+              get_param: [cbam, publicSshKey]
+            $param.cloud_admin_pw:
+              get_param: [cbam, extensions, cloud_admin_pw]
+          template: "#cloud-config\nmerge_type: 'list(append)+dict(recurse_array)+str()'\n\
+            disable_root: false\nssh_pwauth: true\npreserve_hostname: true\nmanage-resolv-conf:\
+            \ false\ncloud_init_modules: [migrator, bootcmd, users-groups, write-files,\
+            \ update_etc_hosts, rsyslog, ssh]\n\nusers:\n  - name : centos\n    description:\
+            \ \"User for administration\"\n    type: unix\n    groups: \"systemd-journal\"\
+            \n    lock_passwd: false\n    passwd: $param.cloud_admin_pw\n    sudo:\
+            \ ['ALL=(ALL) NOPASSWD:ALL']\n    ssh_authorized_keys:\n      - $cbam.publicSshKey\n"
+    type: OS::Heat::SoftwareConfig
+  floating_ip:
+    properties:
+      floating_network: { get_param: [cbam, extVirtualLinks, resourceId] }
+      port_id: {get_resource: internal_port}
+    type: OS::Neutron::FloatingIP
+  internal_port:
+    properties:
+      fixed_ips:
+      - subnet: {get_resource: mock_internal_subnet}
+      network: {get_resource: mock_internal_network}
+      security_groups: {get_param: [cbam, security_groups]}
+    type: OS::Neutron::Port
+  mock_app:
+    properties:
+      availability_zone:
+        get_param: [cbam, resources, mock_app, azId]
+      config_drive: 'true'
+      flavor:
+        get_param: [cbam, resources, mock_app, flavorId]
+      image:
+        get_param: [cbam, resources, server, imageId]
+      key_name: eecloud55
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: $prefix-FP-TVNF
+      networks:
+      - port: {get_resource: internal_port}
+      personality:
+        /usr/bin/get_application.sh: {get_file: get_application.sh}
+      user_data: {get_resource: server_init}
+      user_data_format: RAW
+    type: OS::Nova::Server
+  mock_internal_network:
+    properties:
+      admin_state_up: 'true'
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: $prefix-mock_internal_network
+      shared: 'false'
+    type: OS::Neutron::Net
+  mock_internal_subnet:
+    properties:
+      allocation_pools:
+      - {end: 172.24.18.200, start: 172.24.18.100}
+      cidr: 172.24.18.0/24
+      enable_dhcp: 'True'
+      gateway_ip: 172.24.18.1
+      ip_version: 4
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: $prefix-mock_internal_subnet
+      network_id: {get_resource: mock_internal_network}
+    type: OS::Neutron::Subnet
+  mock_oam_router:
+    properties: {admin_state_up: true, name: mock_oam_router}
+    type: OS::Neutron::Router
+  mock_oam_routerGw:
+    properties:
+      network:
+        get_param: [cbam, extVirtualLinks, resourceId]
+      router_id: {get_resource: mock_oam_router}
+    type: OS::Neutron::RouterGateway
+  mock_oam_routerPort:
+    properties:
+      router_id: {get_resource: mock_oam_router}
+      subnet: {get_resource: mock_internal_subnet}
+    type: OS::Neutron::RouterInterface
+  server_init:
+    properties:
+      parts:
+      - config: {get_resource: cloud_conf}
+      - config: {get_resource: cloud_init}
+        type: multipart
+    type: OS::Heat::MultipartMime

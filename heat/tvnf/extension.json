@@ -1,0 +1,36 @@
+{
+    "resources": {
+      "server": {
+        "flavorId": "aa.001-0002",
+        "imageId": "centos7"
+      },
+      "mock_app": {
+        "flavorId": "ea.002-0008"
+      }
+    },
+    "extensions":[
+        {
+            "name":"artifactory_ip",
+            "value":"10.131.68.237"
+        },
+        {
+            "name":"artifactory_port",
+            "value":"8090"
+        },
+        {
+            "name":"app_version",
+            "value":"0.0.0"
+        },
+        {
+            "name":"repository_name",
+            "value":"fp_tvnf"
+        }
+    ],
+    "security_groups": ["default"],
+    "grantlessMode": true,
+    "flavourId": "scalable",
+    "extVirtualLinks": {
+       "resourceId": "datacentre"
+    }
+}
+
