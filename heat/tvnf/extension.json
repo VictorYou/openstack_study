@@ -8,29 +8,18 @@
         "flavorId": "ea.002-0008"
       }
     },
-    "extensions":[
-        {
-            "name":"artifactory_ip",
-            "value":"10.131.68.237"
-        },
-        {
-            "name":"artifactory_port",
-            "value":"8090"
-        },
-        {
-            "name":"app_version",
-            "value":"0.0.0"
-        },
-        {
-            "name":"repository_name",
-            "value":"fp_tvnf"
-        }
-    ],
+    "extensions": {
+      "artifactory_ip": "10.131.73.147",
+      "artifactory_port": "8090",
+      "app_version": "0.0.0",
+      "repository_name": "fp_tvnf"
+    },
     "security_groups": ["default"],
     "grantlessMode": true,
     "flavourId": "scalable",
     "extVirtualLinks": {
        "resourceId": "datacentre"
-    }
+    },
+    "name_servers": ["10.171.0.2", "10.171.8.4"]
 }
 

@@ -106,6 +106,7 @@ resources:
       allocation_pools:
       - {end: 172.24.18.200, start: 172.24.18.100}
       cidr: 172.24.18.0/24
+      dns_nameservers: {get_param: [cbam, name_servers]}
       enable_dhcp: 'True'
       gateway_ip: 172.24.18.1
       ip_version: 4
