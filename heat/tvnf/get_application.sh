@@ -4,6 +4,7 @@
 I=0
 while [[ $(systemctl is-active docker) != "active" ]]; do
   if [[ I -gt 10 ]]; then
+    echo "docker service not started, exiting"
     exit -1
   fi
   I=$((I+1))
@@ -68,3 +69,69 @@ done
 echo "[DEBUG:] TA downloaded"
 sudo -u centos unzip -d /home/centos /tmp/NeVe_TA_RF.zip
 echo "[DEBUG:] TA extracted"
+
+# download jenkins configuration and jenkins jobs
+JENKINS_CONF_URL="https://"$1"/artifactory/"$3"/"$2"/config."$2".xml"
+echo "[DEBUG:] Download jenkins configuration from: "$JENKINS_CONF_URL
+
+J=0
+while [ ! -f "/var/lib/jenkins/config.xml" ]
+do
+    if [[ J -gt 5 ]]; then
+        echo "[DEBUG:] tried 5 times, exiting"
+        exit -1
+    fi
+    echo "[DEBUG:] try for the $J time"
+    curl -X GET -f --retry 3 --retry-delay 2 -o "/var/lib/jenkins/config.xml" "$JENKINS_CONF_URL" -k
+    J=$((J+1))
+    sleep 5
+done
+echo "[DEBUG:] config.xml downloaded"
+chown jenkins:jenkins /var/lib/jenkins/config.xml
+systemctl restart jenkins
+
+I=0
+while [[ $(systemctl is-active jenkins) != "active" ]]; do
+  if [[ I -gt 10 ]]; then
+    echo "jenkins service not started after updating config.xml, exiting"
+    exit -1
+  fi
+  I=$((I+1))
+  sleep 5
+done
+
+JENKINS_JOB_CONF_URL="https://"$1"/artifactory/"$3"/"$2"/run_fast_pass_ta."$2".xml"
+echo "[DEBUG:] Download jenkins job configuration from: "$JENKINS_JOB_CONF_URL
+
+J=0
+while [ ! -f "/tmp/run_fast_pass_ta.xml" ]
+do
+    if [[ J -gt 5 ]]; then
+        echo "[DEBUG:] tried 5 times, exiting"
+        exit -1
+    fi
+    echo "[DEBUG:] try for the $J time"
+    curl -X GET -f --retry 3 --retry-delay 2 -o "/tmp/run_fast_pass_ta.xml" "$JENKINS_JOB_CONF_URL" -k
+    J=$((J+1))
+    sleep 5
+done
+echo "[DEBUG:] run_fast_pass_ta.xml downloaded"
+
+J=0
+echo "[DEBUG:] download jenkins-cli.jar"
+while ! wget http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar -O /root/jenkins-cli.jar ; do
+  if [[ J -gt 5 ]]; then
+    echo "[DEBUG:] tried 5 times, exiting"
+    exit -1
+  fi
+  echo "[DEBUG:] try for the $J time"
+  J=$((J+1))
+  sleep 5
+done
+echo "[DEBUG:] jenkins-cli.jar downloaded"
+
+if ! java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth 'admin:123456' create-job run_fast_pass_ta < /tmp/run_fast_pass_ta.xml ; then
+  echo "[DEBUG:] jenkins job not created, exiting"
+  exit -1
+fi
+echo "[DEBUG:] jenkins job created"
