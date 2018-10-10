@@ -75,18 +75,20 @@ JENKINS_CONF_URL="https://"$1"/artifactory/"$3"/"$2"/config."$2".xml"
 echo "[DEBUG:] Download jenkins configuration from: "$JENKINS_CONF_URL
 
 J=0
-while [ ! -f "/var/lib/jenkins/config.xml" ]
+while [ ! -f "/tmp/config.xml" ]
 do
     if [[ J -gt 5 ]]; then
         echo "[DEBUG:] tried 5 times, exiting"
         exit -1
     fi
     echo "[DEBUG:] try for the $J time"
-    curl -X GET -f --retry 3 --retry-delay 2 -o "/var/lib/jenkins/config.xml" "$JENKINS_CONF_URL" -k
+    curl -X GET -f --retry 3 --retry-delay 2 -o "/tmp/config.xml" "$JENKINS_CONF_URL" -k
     J=$((J+1))
     sleep 5
 done
 echo "[DEBUG:] config.xml downloaded"
+echo "[DEBUG:] take config.xml and restart jenkins"
+cp /tmp/config.xml /var/lib/jenkins/config.xml
 chown jenkins:jenkins /var/lib/jenkins/config.xml
 systemctl restart jenkins
 
