@@ -38,7 +38,12 @@ resources:
 #        #!/bin/bash
 #        echo "Running boot script"
 #        touch /home/centos/testfile
-      config: {get_file: server_boot.sh}
+      config: 
+        str_replace:
+          template: {get_file: server_boot.sh}
+          params:
+            $NAME: 'viyou'
+            wc_notify: { get_attr: [wait_handle, curl_cli] }
   
   boot_config:
     type: OS::Heat::CloudConfig
@@ -55,6 +60,16 @@ resources:
       - config: {get_resource: boot_config}
       - config: {get_resource: boot_script}
 
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: {get_resource: wait_handle}
+      count: 1
+      timeout: 300
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
   server:
     type: OS::Nova::Server
     properties:
@@ -69,3 +84,5 @@ resources:
 outputs:
   public_ip:
     value: { get_attr: [floating_ip, floating_ip_address] }
+  wc_data:
+    value: { get_attr: [wait_condition, data] }

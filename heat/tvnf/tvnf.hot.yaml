@@ -1,5 +1,6 @@
 description: Mock application for DevOps Server self-testing
 heat_template_version: '2015-04-30'
+
 outputs:
   floating-ip:
     description: floating IP address
@@ -9,8 +10,10 @@ outputs:
     description: oam internal IP address
     value:
       get_attr: [internal_port, fixed_ips, 0, ip_address]
+
 parameters:
   cbam: {type: json}
+
 resources:
   mock_app:
     type: OS::Nova::Server
@@ -33,8 +36,8 @@ resources:
       - port: {get_resource: internal_port}
       personality:
         /usr/bin/get_application.sh: {get_file: get_application.sh}
-      user_data: {get_resource: server_init}
       user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: server_init}
 
   cloud_conf:
     properties:
@@ -117,7 +120,6 @@ resources:
       parts:
       - config: {get_resource: cloud_conf}
       - config: {get_resource: boot_script}
-      - config: {get_resource: cloud_init}
 
   floating_ip:
     properties:
