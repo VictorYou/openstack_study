@@ -30,12 +30,39 @@ resources:
       floating_network: { get_param: [ cbam, externalConnectionPoints, universal_ecp, networkId ] }
       port_id: { get_resource: port }
 
+  boot_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ungrouped
+#      config: |
+#        #!/bin/bash
+#        echo "Running boot script"
+#        touch /home/centos/testfile
+      config: {get_file: server_boot.sh}
+  
+  boot_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /home/centos/created_by_boot_config
+          content: 'created_by_boot_config'
+
+  server_init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: boot_config}
+      - config: {get_resource: boot_script}
+
   server:
     type: OS::Nova::Server
     properties:
       key_name: eecloud55
       image: { get_param: [ cbam, resources, server, imageId ] }
       flavor: { get_param: [ cbam, resources, server, flavorId ] }
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: server_init}
       networks:
         - port: { get_resource: port }
 
