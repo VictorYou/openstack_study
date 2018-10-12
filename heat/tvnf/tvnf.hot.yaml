@@ -10,6 +10,8 @@ outputs:
     description: oam internal IP address
     value:
       get_attr: [internal_port, fixed_ips, 0, ip_address]
+  wc_data:
+    value: { get_attr: [wait_condition, data] }
 
 parameters:
   cbam: {type: json}
@@ -44,20 +46,6 @@ resources:
       cloud_config:
         network: {config: disabled}
         preserve_hostname: true
-        runcmd:
-        - str_replace:
-            params:
-              app_version%:
-                get_param: [cbam, extensions, app_version]
-              artifactory_ip%:
-                get_param: [cbam, extensions, artifactory_ip]
-              artifactory_port%:
-                get_param: [cbam, extensions, artifactory_port]
-              repository_name%:
-                get_param: [cbam, extensions, repository_name]
-            template: 'sh /usr/bin/get_application.sh artifactory_ip%:artifactory_port%
-              app_version% repository_name% 2>&1 > /home/centos/log
-              '
         ssh_pwauth: true
         write_files:
         - path: /home/centos/test_cbam1
@@ -65,54 +53,32 @@ resources:
           content: 'test'
     type: OS::Heat::CloudConfig
 
-  cloud_init:
-    type: OS::Heat::SoftwareConfig
-    properties:
-      config:
-        str_replace:
-          params:
-            $cbam.publicSshKey:
-              get_param: [cbam, publicSshKey]
-            $param.cloud_admin_pw:
-              get_param: [cbam, extensions, cloud_admin_pw]
-          template: |
-            merge_type: 'list(append)+dict(recurse_array)+str()'
-            disable_root: false
-            ssh_pwauth: true
-            preserve_hostname: true
-            manage-resolv-conf: false
-            cloud_init_modules: [migrator, bootcmd, users-groups, write-files, update_etc_hosts, rsyslog, ssh]
-            users:
-              - name: centos
-                description: "User for administration"
-                type: unix
-                groups: "systemd-journal"
-                lock_passwd: false
-                passwd: 123456
-                sudo: ['ALL=(ALL) NOPASSWD:ALL']
-                ssh_authorized_keys:
-                  - 'test key'
-#            write_files:
-#            - path: /home/centos/test_cbam2
-#              permissions: '0644'
-#              content: 'test2'
-
   boot_script:
     type: OS::Heat::SoftwareConfig
     properties:
       config:
         str_replace:
+          template: {get_file: get_application.sh}
           params:
-            app_version%:
+            $APP_VERSION:
               get_param: [cbam, extensions, app_version]
-            artifactory_ip%:
+            $ARTIFACTORY_IP:
               get_param: [cbam, extensions, artifactory_ip]
-            artifactory_port%:
+            $ARTIFACTORY_PORT:
               get_param: [cbam, extensions, artifactory_port]
-            repository_name%:
+            $REPOSITORY_NAME:
               get_param: [cbam, extensions, repository_name]
-          template: 'sh /usr/bin/get_application.sh artifactory_ip%:artifactory_port%
-            app_version% repository_name% 2>&1 > /home/centos/log'
+            wc_notify: { get_attr: [wait_handle, curl_cli] }  
+  
+  wait_condition:
+      type: OS::Heat::WaitCondition
+      properties:
+        handle: {get_resource: wait_handle}
+        count: 1
+        timeout: 500
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
 
   server_init:
     type: OS::Heat::MultipartMime

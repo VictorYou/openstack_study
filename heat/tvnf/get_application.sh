@@ -26,7 +26,7 @@ if [[ K -gt 200 ]]; then
 fi
 
 # download docker image and load
-DOCKER_URL="https://"$1"/artifactory/"$3"/"$2"/neveexec_master."$2".tar.gz"
+DOCKER_URL="https://"$ARTIFACTORY_IP":"$ARTIFACTORY_PORT"/artifactory/"$REPOSITORY_NAME"/"$APP_VERSION"/neveexec_master."$APP_VERSION".tar.gz"
 echo "[DEBUG:] Download Docker image from: "$DOCKER_URL
 
 J=0
@@ -50,7 +50,7 @@ else
 fi  
 
 # download test case zip and unzip
-TA_URL="https://"$1"/artifactory/"$3"/"$2"/NeVe_TA_RF."$2".zip"
+TA_URL="https://"$ARTIFACTORY_IP":"$ARTIFACTORY_PORT"/artifactory/"$REPOSITORY_NAME"/"$APP_VERSION"/NeVe_TA_RF."$APP_VERSION".zip"
 echo "[DEBUG:] Download TA cases from: "$TA_URL
 
 J=0
@@ -71,7 +71,7 @@ sudo -u centos unzip -d /home/centos /tmp/NeVe_TA_RF.zip
 echo "[DEBUG:] TA extracted"
 
 # download jenkins configuration and jenkins jobs
-JENKINS_CONF_URL="https://"$1"/artifactory/"$3"/"$2"/config."$2".xml"
+JENKINS_CONF_URL="https://"$ARTIFACTORY_IP":"$ARTIFACTORY_PORT"/artifactory/"$REPOSITORY_NAME"/"$APP_VERSION"/config."$APP_VERSION".xml"
 echo "[DEBUG:] Download jenkins configuration from: "$JENKINS_CONF_URL
 
 J=0
@@ -102,7 +102,7 @@ while [[ $(systemctl is-active jenkins) != "active" ]]; do
   sleep 5
 done
 
-JENKINS_JOB_CONF_URL="https://"$1"/artifactory/"$3"/"$2"/run_fast_pass_ta."$2".xml"
+JENKINS_JOB_CONF_URL="https://"$ARTIFACTORY_IP":"$ARTIFACTORY_PORT"/artifactory/"$REPOSITORY_NAME"/"$APP_VERSION"/run_fast_pass_ta."$APP_VERSION".xml"
 echo "[DEBUG:] Download jenkins job configuration from: "$JENKINS_JOB_CONF_URL
 
 J=0
@@ -137,3 +137,5 @@ if ! java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth 'admin:1234
   exit -1
 fi
 echo "[DEBUG:] jenkins job created"
+
+wc_notify --data-binary '{"status": "SUCCESS", "id": "id1", "data": "boot script finished"}'
