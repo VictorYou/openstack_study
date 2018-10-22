@@ -1,24 +1,24 @@
 {
     "resources": {
       "server": {
-        "flavorId": "aa.001-0002",
+        "flavorId": "m1.medium",
         "imageId": "centos7"
       },
       "mock_app": {
-        "flavorId": "ea.002-0008"
+        "flavorId": "m1.medium"
       }
     },
     "extensions": {
-      "artifactory_ip": "10.131.73.147",
+      "artifactory_ip": "10.76.141.139",
       "artifactory_port": "8090",
-      "app_version": "0.0.0",
-      "repository_name": "fp_tvnf"
+      "app_version": "0.0.1",
+      "repository_name": "fp-tvnf"
     },
     "security_groups": ["default"],
     "grantlessMode": true,
     "flavourId": "scalable",
     "extVirtualLinks": {
-       "resourceId": "datacentre"
+       "resourceId": "v12377_OAM_129"
     },
     "name_servers": ["10.171.0.2", "10.171.8.4"],
     "publicSshKey": "i am a test key"

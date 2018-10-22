@@ -138,4 +138,4 @@ if ! java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth 'admin:1234
 fi
 echo "[DEBUG:] jenkins job created"
 
-wc_notify --data-binary '{"status": "SUCCESS", "id": "id1", "data": "boot script finished"}'
+wc_notify -k --data-binary '{"status": "SUCCESS", "id": "id1", "data": "boot script finished"}'

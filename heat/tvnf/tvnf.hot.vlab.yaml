@@ -27,7 +27,7 @@ resources:
         get_param: [cbam, resources, mock_app, flavorId]
       image:
         get_param: [cbam, resources, server, imageId]
-      key_name: eecloud55
+      key_name: opus25
       name:
         str_replace:
           params:
@@ -37,7 +37,7 @@ resources:
       networks:
       - port: {get_resource: internal_port}
       personality:
-        /usr/bin/get_application.sh: {get_file: get_application.sh}
+        /usr/bin/server_init.sh: {get_file: server_init.sh}
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: server_init}
 
@@ -58,7 +58,7 @@ resources:
     properties:
       config:
         str_replace:
-          template: {get_file: get_application.sh}
+          template: {get_file: server_init.sh}
           params:
             $APP_VERSION:
               get_param: [cbam, extensions, app_version]
