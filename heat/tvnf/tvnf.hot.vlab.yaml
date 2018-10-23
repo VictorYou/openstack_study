@@ -33,7 +33,7 @@ resources:
           params:
             $prefix:
               get_param: [cbam, vnfId]
-          template: $prefix-FP-TVNF
+          template: MYSTACK
       networks:
       - port: {get_resource: internal_port}
       personality:
