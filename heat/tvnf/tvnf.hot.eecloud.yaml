@@ -42,16 +42,24 @@ resources:
       user_data: {get_resource: server_init}
 
   cloud_conf:
+    type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        network: {config: disabled}
+        merge_type: 'list(append)+dict(recurse_array)+str()'
+        disable_root: false
+        ssh_pwauth: false
         preserve_hostname: true
-        ssh_pwauth: true
-        write_files:
-        - path: /home/centos/test_cbam1
-          permissions: '0644'
-          content: 'test'
-    type: OS::Heat::CloudConfig
+        manage-resolv-conf: false
+        cloud_init_modules: [migrator, bootcmd, users-groups, write-files, update_etc_hosts, rsyslog, ssh, runcmd]
+
+        users:
+          - name : cloudadmin
+            description: "User for administration"
+            type: unix
+            lock_passwd: true
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh_authorized_keys:
+              - {get_param: [cbam,publicSshKey]}
 
   boot_script:
     type: OS::Heat::SoftwareConfig

@@ -24,7 +24,7 @@ if [[ K -gt 200 ]]; then
   exit -1
 fi
 
-function check_artifact_suffix()
+function check_artifact_version()
 {
   local artifactory_ip=$1
   local artifactory_port=$2
@@ -32,14 +32,21 @@ function check_artifact_suffix()
   local app_version=$4
   local artifact_name=$5
 
-  artifact=$(curl -uadmin:APidn22umAgCGbtZUDwYib5PcfrE1Rv1m9gXhwujZx3u4qYk -X GET "https://$artifactory_ip:$artifactory_port/artifactory/api/storage/$repository_name/$app_version" -k | jq -r '.children[]' | jq -r '.uri' | grep $artifact_name)
+  curl -X GET "https://$artifactory_ip:$artifactory_port/artifactory/$repository_name/$app_version/METADATA/product.txt" --output /root/product.txt -k
 
-  if [ -z $artifact ]; then
+  local I=0
+  for file in `cat /root/product.txt | jq -r '.artifacts[]' | jq -r '."filename"'` ; do
+    [[ $file =~ "$artifact_name" ]] && break
+    I=$((I+1))
+  done
+  local version=$(cat /root/product.txt | jq -r ".artifacts[$I]" | jq -r ".version")
+
+  if [ -z $version ]; then
     echo "artifact $artifact_name not found, exiting"
     exit -1
   fi
 
-  echo ${artifact#/$artifact_name}
+  echo ${version}
 }
 
 function download_file()
@@ -70,29 +77,37 @@ function download_file()
 }
 
 # download docker image and load
-SUFFIX=$(check_artifact_suffix "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "neveexec_master")
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "neveexec_master"$SUFFIX 5
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "neveexec_master")
+DOCKER_IMG_FILE="neveexec_master."$VERSION".tar.gz"
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$DOCKER_IMG_FILE" 5
 
-if docker load -i /tmp/"neveexec_master"$SUFFIX --quiet ; then
+echo "[DEBUG:] loading docker image"
+IMG=$(docker load -i /tmp/"$DOCKER_IMG_FILE" --quiet | cut -d " " -f4)
+IMG=${IMG#sha256:}
+if [ ! -z $IMG ]; then
   echo "image loaded"
+  docker tag $IMG archive.docker-registry.eecloud.nsn-net.net/netact_verification_pipeline/neveexec:master
+  echo "image tagged"
 else
   echo "failed to load image, exiting"
   exit =1
 fi  
 
 # download test case zip and unzip
-SUFFIX=$(check_artifact_suffix "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "NeVe_TA_RF")
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "NeVe_TA_RF"$SUFFIX 20
-sudo -u centos unzip -d /home/centos /tmp/"NeVe_TA_RF"$SUFFIX
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "NeVe_TA_RF")
+TA_FILE="NeVe_TA_RF."$VERSION".zip"
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$TA_FILE" 20
+sudo -u centos unzip -d /home/centos /tmp/"$TA_FILE"
 echo "[DEBUG:] TA extracted"
 
 # download jenkins configuration and jenkins jobs
-SUFFIX=$(check_artifact_suffix "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "config")
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "config"$SUFFIX 20
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "config")
+JENKINS_CONF="config."$VERSION".xml"
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_CONF" 20
 
 echo "[DEBUG:] take config.xml and restart jenkins"
 
-cp /tmp/"config"$SUFFIX /var/lib/jenkins/config.xml
+cp /tmp/"$JENKINS_CONF" /var/lib/jenkins/config.xml
 chown jenkins:jenkins /var/lib/jenkins/config.xml
 systemctl restart jenkins
 
@@ -106,8 +121,9 @@ while [[ $(systemctl is-active jenkins) != "active" ]]; do
   sleep 5
 done
 
-SUFFIX=$(check_artifact_suffix "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "run_fast_pass_ta")
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "run_fast_pass_ta"$SUFFIX 20
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "run_fast_pass_ta")
+JENKINS_JOB_CONF="run_fast_pass_ta."$VERSION".xml"
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_JOB_CONF" 20
 
 J=0
 echo "[DEBUG:] download jenkins-cli.jar"
@@ -122,7 +138,7 @@ while ! wget http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar -O /root/jenkins-cli
 done
 echo "[DEBUG:] jenkins-cli.jar downloaded"
 
-if ! java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth 'admin:123456' create-job run_fast_pass_ta < /tmp/"run_fast_pass_ta"$SUFFIX ; then
+if ! java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth 'admin:123456' create-job run_fast_pass_ta < /tmp/"$JENKINS_JOB_CONF" ; then
   echo "[DEBUG:] jenkins job not created, exiting"
   exit -1
 fi

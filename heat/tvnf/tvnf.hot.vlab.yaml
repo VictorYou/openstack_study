@@ -27,7 +27,6 @@ resources:
         get_param: [cbam, resources, mock_app, flavorId]
       image:
         get_param: [cbam, resources, server, imageId]
-      key_name: opus25
       name:
         str_replace:
           params:
