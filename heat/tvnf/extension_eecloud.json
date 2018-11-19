@@ -12,7 +12,9 @@
       "artifactory_ip": "10.131.73.147",
       "artifactory_port": "8090",
       "app_version": "0.0.4",
-      "repository_name": "init-fp-tvnf"
+      "repository_name": "init-fp-tvnf",
+      "repository_username": "admin",
+      "repository_token": "AP5xYZmEKPBxrWc9t2Sr8bMDKfE3q3jbFaF8J4ZG7Jr49y1Pf"
     },
     "security_groups": ["default"],
     "grantlessMode": true,

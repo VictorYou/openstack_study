@@ -28,11 +28,13 @@ function check_artifact_version()
 {
   local artifactory_ip=$1
   local artifactory_port=$2
-  local repository_name=$3
-  local app_version=$4
-  local artifact_name=$5
+  local artifactory_username=$3
+  local artifactory_token=$4
+  local repository_name=$5
+  local app_version=$6
+  local artifact_name=$7
 
-  curl -X GET "https://$artifactory_ip:$artifactory_port/artifactory/$repository_name/$app_version/METADATA/product.txt" --output /root/product.txt -k
+  curl -u$artifactory_username:$artifactory_token -X GET "https://$artifactory_ip:$artifactory_port/artifactory/$repository_name/$app_version/METADATA/product.txt" --output /root/product.txt -k
 
   local I=0
   for file in `cat /root/product.txt | jq -r '.artifacts[]' | jq -r '."filename"'` ; do
@@ -45,7 +47,6 @@ function check_artifact_version()
     echo "artifact $artifact_name not found, exiting"
     exit -1
   fi
-
   echo ${version}
 }
 
@@ -53,10 +54,12 @@ function download_file()
 {
   local artifactory_ip=$1
   local artifactory_port=$2
-  local repository_name=$3
-  local app_version=$4
-  local artifact=$5
-  local time=$6
+  local artifactory_username=$3
+  local artifactory_token=$4
+  local repository_name=$5
+  local app_version=$6
+  local artifact=$7
+  local time=$8
 
   URL="https://"$artifactory_ip":"$artifactory_port"/artifactory/"$repository_name"/"$app_version"/"$artifact
   echo "[DEBUG:] Download $artifact from: "$URL
@@ -69,7 +72,7 @@ function download_file()
           exit -1
       fi
       echo "[DEBUG:] try for the $J time"
-      curl -X GET -f --retry 3 --retry-delay 2 -o "/tmp/$artifact" "$URL" -k
+      curl -u$artifactory_username:$artifactory_token -X GET -f --retry 3 --retry-delay 2 -o "/tmp/$artifact" "$URL" -k
       J=$((J+1))
       sleep 5
   done
@@ -77,9 +80,9 @@ function download_file()
 }
 
 # download docker image and load
-VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "neveexec_master")
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "neveexec_master")
 DOCKER_IMG_FILE="neveexec_master."$VERSION".tar.gz"
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$DOCKER_IMG_FILE" 5
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "$DOCKER_IMG_FILE" 5
 
 echo "[DEBUG:] loading docker image"
 IMG=$(docker load -i /tmp/"$DOCKER_IMG_FILE" --quiet | cut -d " " -f4)
@@ -94,16 +97,16 @@ else
 fi  
 
 # download test case zip and unzip
-VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "NeVe_TA_RF")
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "NeVe_TA_RF")
 TA_FILE="NeVe_TA_RF."$VERSION".zip"
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$TA_FILE" 20
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "$TA_FILE" 20
 sudo -u centos unzip -d /home/centos /tmp/"$TA_FILE"
 echo "[DEBUG:] TA extracted"
 
 # download jenkins configuration and jenkins jobs
-VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "config")
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "config")
 JENKINS_CONF="config."$VERSION".xml"
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_CONF" 20
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_CONF" 20
 
 echo "[DEBUG:] take config.xml and restart jenkins"
 
@@ -121,9 +124,9 @@ while [[ $(systemctl is-active jenkins) != "active" ]]; do
   sleep 5
 done
 
-VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "run_fast_pass_ta")
+VERSION=$(check_artifact_version "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "run_fast_pass_ta")
 JENKINS_JOB_CONF="run_fast_pass_ta."$VERSION".xml"
-download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_JOB_CONF" 20
+download_file "$ARTIFACTORY_IP" "$ARTIFACTORY_PORT" "$ARTIFACTORY_USERNAME" "$ARTIFACTORY_TOKEN" "$REPOSITORY_NAME" "$APP_VERSION" "$JENKINS_JOB_CONF" 20
 
 J=0
 echo "[DEBUG:] download jenkins-cli.jar"

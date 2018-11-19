@@ -72,6 +72,10 @@ resources:
               get_param: [cbam, extensions, app_version]
             $ARTIFACTORY_IP:
               get_param: [cbam, extensions, artifactory_ip]
+            $ARTIFACTORY_USERNAME:
+              get_param: [cbam, extensions, artifactory_username]
+            $ARTIFACTORY_TOKEN:
+              get_param: [cbam, extensions, artifactory_token]
             $ARTIFACTORY_PORT:
               get_param: [cbam, extensions, artifactory_port]
             $REPOSITORY_NAME:
