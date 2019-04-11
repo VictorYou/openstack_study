@@ -1,0 +1,24 @@
+{
+    "resources": {
+      "server": {
+        "flavorId": "m1.small",
+        "imageId": "centos7"
+      },
+      "mock_app": {
+        "flavorId": "m1.small"
+      }
+    },
+    "extensions": {
+      "app_version": "0.0.4"
+    },
+    "security_groups": ["default"],
+    "grantlessMode": true,
+    "flavourId": "scalable",
+    "extVirtualLinks": {
+       "resourceId": "v12377_OAM_129"
+    },
+    "name_servers": ["10.171.0.2", "10.171.8.4"],
+    "publicSshKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjAoA/8lJUzkBlnazzXOhZnsDC4zjCw9pBq4/BmpydXbsv3q4w50o+VszKRKmHxSqc6G2okNLP+IxM5uHxpx/0NyRgEndyKZFYndLy/Vy4G3wnxOtzVP9k6pPmGwQiIpxj/btpqDEEqOEBPHwm+r6kyWXK6vKfTH32mYbk7JIfEuhYjH8pf4EHuUXjY/HgvjfGICITbE3fUhIoGXBX2RxGdpwOF70C2W9i9pvmWixAoxcwlnZcOy0ZV87tTrC/t3yVZ4anByHdTjkWf+vWuffiqgpqQ7UjBEtf8oUP0+laF6uLj+LsKSD+ZUBd2KVoyFNSYV1e5TplyVlH0SX2u217",
+    "privateSshKey": "-----BEGIN RSA PRIVATE KEY-----\\nMIIEpQIBAAKCAQEA4wKAP/JSVM5AZZ2s81zoWZ7AwuM4wsPaQauPwZqcnV27L96u\\nMOdKPlbMykSph8UqnOhtqJDSz/iMTObh8acf9DckYBJ3cimRWJ3S8v1cuBt8J8Tr\\nc1T/ZOqT5hsEIiKcY/27aagxBKjhATx8Jvq+pMllyuryn0x99pmG5OySHxLoWIx/\\nKX+BB7lF42Px4L43xiAiE2xN31ISKBlwV9kcRnacDhe9AtlvYvab5losQKMXMJZ2\\nXDstGVfO7U6wv7d8lWeGpwch3U45Fn/r1rn34qoKakO1IwRLX/KFD9PpWheri4/i\\n7Ckg/mVAXdilaMhTUmFdXuU6ZclZR9El9rttewIDAQABAoIBAQDfHAcmUige13Mt\\nK/HeYZKu+jsjj6Sqr0jkQBSSyD1i4MtneekjgT5T1IWDykYAfYSrIDkece/vnK1v\\nq3+nPIVIRaXHkn64wifqu3qnfOHSxJiakYyDFqfH7FEd17GRRwkDsU2vwzEiDkTO\\nLT8sJEaYuKQF8jIw5EHsyulsNyJJzDXCuSnvMzijmP1l4lK9uO2gzJ7N4ALt/Amy\\nV8DGTRO8fHOU53/23roQlteTalD6anNo21mbEQfo6sh3XuPRoKrIHrJloJ8hvWfr\\njZ+a59oaxwoKszUKLIJBg2GU6w7CNOhjoNoHcZSAzSjTUzSgymIUNcbtK/Wkwr4e\\nuCHt3ua5AoGBAP/PyUDW9kd/7B+kQMREkBKADWWwhoP1O/HABCK39oS0qIGloziA\\ntxuTp0JZHmR3wJX3ysgovE52c6MS4oaQ+OLYfheHr+sdUMG1l3oKv+80lUjkKJRo\\nyYGj7MtCRu9NAMtrsgqrarzaZcrdiBQoFg5yEExyu1tzwS1GwwXfjY99AoGBAOMt\\nSVLiiOAoOoXlmf0Z9jowQZzIhZA+qNFdWbAGQJii7ixFmkaRkXZCYiLyAb1UNFHv\\nsKf6vM7ZkcNS6Uzn0W0OxrYDjRKtGevDZ8AWgBK1hlLHsyH6V/2jFoN7ie8AQ9ou\\nNaJjvpgV48xRWSP5eUSDH6u3dmNjVbLRB9PDwnJXAoGBANMcYsVM4aBuFKqkPgL7\\nZj6uSOAkB079YoQG6CLS2PH5uZqM3J+zseljOESMEYXuQhRBk6sN2yGRpart2d4d\\n5BgpfB3lD6wj3FKQjzrbhjxdk9m82TRpKesAIlo4DxxL2x0FesBNaOAECL+bhULF\\nNjajsYm1oaM+ayz3WdkN/eBtAoGAJLLdJHmZ+PQmuBimLp/yCeZfww8VnH6y0NeO\\ntIPeDYpMhXRc/sdnQz5oEhMcOtSOeyoIVKqJs7Sr+my7aYQNbdu0OBUMxhaWmGKB\\nsSMxX1RZtaezBWsmqb+d1HGxj51wWJ+cZHZOhM0MdqYxi0Ey2OGBzUCe7GFQp8li\\nxU/bapMCgYEApZrrls2nAW2tsu2wlNI/+UWMzr/+7V2QJefDA1OQCpIEWiGL3jG6\\nGpXslRJXnuUZan5SOIFOox/WKBav0XaUfmIsQDTJQKTPR0B3AzFIxco0c+G41XFc\\nrT4Eoo3niDd1YN4Jkj9bX4EbTfqrF9ZiXAEWOCOgu04U7qIGjMbIRvQ=\\n-----END RSA PRIVATE KEY-----\\n"
+}
+

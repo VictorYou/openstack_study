@@ -1,0 +1,152 @@
+description: Mock application for DevOps Server self-testing
+heat_template_version: '2015-04-30'
+
+outputs:
+  floating-ip:
+    description: floating IP address
+    value:
+      get_attr: [floating_ip, floating_ip_address]
+  internal-ip:
+    description: oam internal IP address
+    value:
+      get_attr: [internal_port, fixed_ips, 0, ip_address]
+  wc_data:
+    value: { get_attr: [wait_condition, data] }
+
+parameters:
+  cbam: {type: json}
+
+resources:
+  mock_app:
+    type: OS::Nova::Server
+    properties:
+      availability_zone:
+        get_param: [cbam, resources, mock_app, azId]
+      config_drive: 'true'
+      flavor:
+        get_param: [cbam, resources, mock_app, flavorId]
+      image:
+        get_param: [cbam, resources, server, imageId]
+      key_name: eecloud55
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: MYSTACK
+      networks:
+      - port: {get_resource: internal_port}
+      personality:
+        /usr/bin/server_init.sh: {get_file: server_init.sh}
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: server_init}
+
+  cloud_conf:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        merge_type: 'list(append)+dict(recurse_array)+str()'
+        disable_root: false
+        ssh_pwauth: false
+        preserve_hostname: true
+        manage-resolv-conf: false
+        cloud_init_modules: [migrator, bootcmd, users-groups, write-files, update_etc_hosts, rsyslog, ssh, runcmd]
+
+        users:
+          - name : cloudadmin
+            description: "User for administration"
+            type: unix
+            lock_passwd: true
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh_authorized_keys:
+              - {get_param: [cbam,publicSshKey]}
+
+  boot_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          template: {get_file: server_init.sh}
+          params:
+            $APP_VERSION:
+              get_param: [cbam, extensions, app_version]
+            wc_notify: { get_attr: [wait_handle, curl_cli] }  
+  
+  wait_condition:
+      type: OS::Heat::WaitCondition
+      properties:
+        handle: {get_resource: wait_handle}
+        count: 1
+        timeout: 500
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
+  server_init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: cloud_conf}
+      - config: {get_resource: boot_script}
+
+  floating_ip:
+    properties:
+      floating_network: { get_param: [cbam, extVirtualLinks, resourceId] }
+      port_id: {get_resource: internal_port}
+    type: OS::Neutron::FloatingIP
+
+  internal_port:
+    properties:
+      fixed_ips:
+      - subnet: {get_resource: mock_internal_subnet}
+      network: {get_resource: mock_internal_network}
+      security_groups: {get_param: [cbam, security_groups]}
+    type: OS::Neutron::Port
+
+  mock_internal_network:
+    properties:
+      admin_state_up: 'true'
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: $prefix-mock_internal_network
+      shared: 'false'
+    type: OS::Neutron::Net
+
+  mock_internal_subnet:
+    properties:
+      allocation_pools:
+      - {end: 172.24.18.200, start: 172.24.18.100}
+      cidr: 172.24.18.0/24
+      dns_nameservers: {get_param: [cbam, name_servers]}
+      enable_dhcp: 'True'
+      gateway_ip: 172.24.18.1
+      ip_version: 4
+      name:
+        str_replace:
+          params:
+            $prefix:
+              get_param: [cbam, vnfId]
+          template: $prefix-mock_internal_subnet
+      network_id: {get_resource: mock_internal_network}
+    type: OS::Neutron::Subnet
+
+  mock_oam_router:
+    properties: {admin_state_up: true, name: mock_oam_router}
+    type: OS::Neutron::Router
+
+  mock_oam_routerGw:
+    properties:
+      network:
+        get_param: [cbam, extVirtualLinks, resourceId]
+      router_id: {get_resource: mock_oam_router}
+    type: OS::Neutron::RouterGateway
+
+  mock_oam_routerPort:
+    properties:
+      router_id: {get_resource: mock_oam_router}
+      subnet: {get_resource: mock_internal_subnet}
+    type: OS::Neutron::RouterInterface
+
