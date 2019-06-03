@@ -93,7 +93,6 @@ resources:
   floating_ip:
     properties:
       floating_network: { get_param: [cbam, extVirtualLinks, resourceId] }
-      floating_ip_address: 10.55.76.29
       port_id: {get_resource: internal_port}
     type: OS::Neutron::FloatingIP
 
