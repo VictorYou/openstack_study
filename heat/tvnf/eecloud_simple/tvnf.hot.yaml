@@ -24,9 +24,9 @@ resources:
         get_param: [cbam, resources, mock_app, azId]
       config_drive: 'true'
       flavor:
-        get_param: [cbam, resources, mock_app, flavorId]
+        get_param: [cbam, resources, flavorId]
       image:
-        get_param: [cbam, resources, server, imageId]
+        get_param: [cbam, resources, imageId]
       key_name: eecloud55
       name:
         str_replace:
@@ -69,7 +69,7 @@ resources:
           template: {get_file: server_init.sh}
           params:
             $APP_VERSION:
-              get_param: [cbam, extensions, app_version]
+              get_param: [cbam, resources, app_version]
             wc_notify: { get_attr: [wait_handle, curl_cli] }  
   
   wait_condition:
@@ -140,7 +140,7 @@ resources:
   mock_oam_routerGw:
     properties:
       network:
-        get_param: [cbam, extVirtualLinks, resourceId]
+        get_param: [cbam, extVirtualLinks]
       router_id: {get_resource: mock_oam_router}
     type: OS::Neutron::RouterGateway
 
