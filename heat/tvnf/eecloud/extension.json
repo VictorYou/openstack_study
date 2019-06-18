@@ -1,8 +1,7 @@
 {
     "resources": {
       "server": {
-        "flavorId": "aa.001-0002",
-        "imageId": "centos7"
+        "imageId": "ubuntu1804"
       },
       "mock_app": {
         "flavorId": "ea.002-0008"
