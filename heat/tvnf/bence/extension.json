@@ -2,7 +2,7 @@
     "resources": {
       "server": {
         "flavorId": "m1.small",
-        "imageId": "ubuntu1804"
+        "imageId": "ubuntu-microk8s_ubuntu1804_016fab4_20190905"
       },
       "mock_app": {
         "flavorId": "m1.small"
